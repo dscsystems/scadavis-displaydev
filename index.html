@@ -1,221 +1,222 @@
 <!doctype html>
 <html>
-  <head>
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCADAvis.io | Display Developer</title>
     <link rel="stylesheet" href="jexcel.css" type="text/css" />
     <link rel="stylesheet" href="jsuites.css" type="text/css" />
+    <link rel="stylesheet" href="index.css" type="text/css" />
     <script src="jexcel.js"></script>
     <script src="jsuites.js"></script>
     <script src="jszip.js"></script>
     <script src="xlsx.js"></script>
   </head>
 
-  <body style="font-family: calibri, arial, sans-serif">
-    <div id="divdisplayleft" style="float: left">
-      <div
-        id="divdisplay"
-        style="
-          width: 500px;
-          height: 500px;
-          border: 1px solid black;
-          margin-right: 20px;
-        "
-      ></div>
-      <div style="clear: both; padding-top: 20px">
-        Tags File:
-        <input
-          type="text"
-          id="sheetname"
-          name="sheetname"
-          value="taglist.csv"
-        />
-        <button value="" onClick="setup_taglist();">Reload Taglist</button>
-        <br />
-        <br />
-        SVG File:
-        <input type="text" id="svgname" name="svgname" value="training1.svg" />
-        <button value="" onClick="setup_display();">Reload Display</button>
-        <span id="svgerr"></span>
-        <br />
-        Width:
-        <input
-          type="number"
-          id="svgwidth"
-          name="svgwidth"
-          size="6"
-          min="100"
-          max="10000"
-          value="500"
-        />
-        <br />
-        Height:
-        <input
-          type="number"
-          id="svgheight"
-          name="svgheight"
-          size="6"
-          min="100"
-          max="10000"
-          value="500"
-        />
-        <br />
-        Zoom Level:
-        <input
-          type="number"
-          id="svgzoom"
-          name="svgzoom"
-          size="6"
-          min="0"
-          max="1"
-          value="0.5"
-        />
-        <pre>
-            ===================================================
-            SCADAvis.io Display Development Helper V3.0
-            Copyright 2020-present - DSC Systems
-            ===================================================
-            </pre
-        >
-      </div>
-    </div>
-    <div style="float: left">
-      <div id="spreadsheet"></div>
-      <br />
-      <button value="" onClick="sheet.insertRow();">Insert Row</button>
+  <body>
+    <div class="app-container">
+      <aside class="sidebar">
+        <div class="sidebar-controls">
+          <section class="section">
+            <h2 class="section-title">Data Source</h2>
+            <div class="input-group">
+              <label for="sheetname">Tags File</label>
+              <input type="text" id="sheetname" class="input-control" value="taglist.csv" />
+            </div>
+            <button class="btn" onClick="setup_taglist();">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path></svg>
+              Reload Tags
+            </button>
+          </section>
+
+          <section class="section">
+            <h2 class="section-title">Display Settings</h2>
+            <div class="input-group">
+              <label for="svgname">SVG Display File</label>
+              <input type="text" id="svgname" class="input-control" value="training1.svg" />
+            </div>
+            <div id="svgerr"></div>
+            <button class="btn" onClick="setup_display();">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+              Reload Display
+            </button>
+          </section>
+
+          <section class="section">
+            <h2 class="section-title">Dimensions &amp; View</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <div class="input-group">
+                <label for="svgwidth">Width</label>
+                <input type="number" id="svgwidth" class="input-control" value="800" />
+              </div>
+              <div class="input-group">
+                <label for="svgheight">Height</label>
+                <input type="number" id="svgheight" class="input-control" value="600" />
+              </div>
+            </div>
+            <div class="input-group">
+              <label for="svgzoom">Zoom Level</label>
+              <input type="number" id="svgzoom" class="input-control" step="0.1" value="0.5" />
+            </div>
+          </section>
+        </div>
+
+        <div class="data-panel">
+          <div class="data-panel-header">
+            <div class="data-panel-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M3 9h18"></path><path d="M9 21V9"></path></svg>
+              Data Points
+            </div>
+            <button class="btn-add-point" onClick="window.sheet.insertRow();" title="Add new row">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            </button>
+          </div>
+          <div class="spreadsheet-wrapper">
+            <div id="spreadsheet"></div>
+          </div>
+        </div>
+
+        <div class="status-info">
+          <p>SCADAvis.io &bull; DSC Systems &copy; 2020-present</p>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <div id="divdisplay"></div>
+      </main>
     </div>
 
     <script type="module">
       import { scadavisInit } from "./synoptic3/scada-vis.js";
 
-      let sheet;
+      window.sheet = null;
       let svgstring;
       let svInstance;
 
-      // Expose sheet to window so HTML can access it
-      window.sheet = sheet;
-
       let changed = function (instance, cell, x, y, value) {
-        if (sheet == undefined || sheet == null || svInstance == undefined)
+        if (window.sheet == undefined || window.sheet == null || svInstance == undefined)
           return;
 
-        let dt = sheet.getData();
+        let dt = window.sheet.getData();
 
         for (let i = 0; i < dt.length; i++) {
-          if (!isNaN(parseFloat(dt[i][1])))
-            svInstance.storeValue(dt[i][0], parseFloat(dt[i][1]), false, false);
-          else if (dt[i][1].toLowerCase() === "false")
-            svInstance.storeValue(dt[i][0], false, false, false);
-          else if (dt[i][1].toLowerCase() === "true")
-            svInstance.storeValue(dt[i][0], true, false, false);
-          else svInstance.storeValue(dt[i][0], dt[i][1], false, false);
+          let tag = dt[i][0];
+          let val = dt[i][1];
+          if (!tag) continue;
+
+          if (!isNaN(parseFloat(val)))
+            svInstance.storeValue(tag, parseFloat(val), false, false);
+          else if (val.toLowerCase() === "false")
+            svInstance.storeValue(tag, false, false, false);
+          else if (val.toLowerCase() === "true")
+            svInstance.storeValue(tag, true, false, false);
+          else 
+            svInstance.storeValue(tag, val, false, false);
         }
         svInstance.updateValues();
       };
 
       function setup_taglist() {
-        jexcel.destroy(document.getElementById("spreadsheet"));
-        sheet = null;
+        if (window.sheet) {
+          jexcel.destroy(document.getElementById("spreadsheet"));
+        }
+        window.sheet = null;
 
-        if (document.getElementById("sheetname").value.indexOf(".xlsx") != -1) {
+        const sheetUrl = document.getElementById("sheetname").value;
+        const isXlsx = sheetUrl.toLowerCase().endsWith(".xlsx");
+
+        if (isXlsx) {
           jexcel.fromSpreadsheet(
-            document.getElementById("sheetname").value + "?R=" + Math.random(),
+            sheetUrl + "?R=" + Math.random(),
             function (result) {
               if (!result.length) {
                 console.error("JEXCEL: Something went wrong.");
               } else {
                 result[0].onchange = changed;
-                result[0].columns = [{ title: "TAGs" }, { title: "Values" }];
-                sheet = jexcel(
-                  document.getElementById("spreadsheet"),
-                  result[0],
-                );
-                window.sheet = sheet; // Keep global reference updated
+                result[0].columns = [{ title: "TAG", width: 120 }, { title: "Value", width: 90 }];
+                window.sheet = jexcel(document.getElementById("spreadsheet"), result[0]);
                 changed();
               }
             },
           );
         } else {
-          sheet = jexcel(document.getElementById("spreadsheet"), {
-            csv:
-              document.getElementById("sheetname").value +
-              "?R=" +
-              Math.random(),
+          window.sheet = jexcel(document.getElementById("spreadsheet"), {
+            csv: sheetUrl + "?R=" + Math.random(),
             csvHeaders: true,
             columns: [
-              { type: "text", width: 200 },
-              { type: "text", width: 100 },
+              { type: "text", title: "TAG",   width: 120 },
+              { type: "text", title: "Value", width: 90  },
             ],
             onchange: changed,
-            onload: function (result) {
-              // changed();
+            onload: function () {
+              changed();
             },
           });
-          window.sheet = sheet; // Keep global reference updated
         }
       }
 
       function setup_display() {
-        document.getElementById("divdisplay").style.width =
-          document.getElementById("svgwidth").value + "px";
-        document.getElementById("divdisplay").style.height =
-          document.getElementById("svgheight").value + "px";
-        document.getElementById("divdisplay").innerHTML = "";
+        const width = document.getElementById("svgwidth").value;
+        const height = document.getElementById("svgheight").value;
+        const svgUrl = document.getElementById("svgname").value;
+        const zoom = document.getElementById("svgzoom").value;
+
+        const displayContainer = document.getElementById("divdisplay");
+        displayContainer.innerHTML = "";
+        
         scadavisInit({
           container: "divdisplay",
-          iframeparams:
-            'height="' +
-            document.getElementById("svgheight").value +
-            '" width="' +
-            document.getElementById("svgwidth").value +
-            'px"',
-          svgurl:
-            document.getElementById("svgname").value + "?R=" + Math.random(),
+          iframeparams: `height="${height}" width="${width}"`,
+          svgurl: svgUrl + "?R=" + Math.random(),
         }).then(function (sv) {
           svInstance = sv;
-          svInstance.zoomTo(document.getElementById("svgzoom").value);
+          svInstance.zoomTo(zoom);
           svInstance.enableTools(false, true);
           svInstance.hideWatermark();
           changed();
         });
       }
 
-      // Expose functions to global scope
+      // Expose functions to global scope for HTML event handlers
       window.setup_taglist = setup_taglist;
       window.setup_display = setup_display;
       window.changed = changed;
 
-      setup_taglist();
+      // Initial Load
+      document.addEventListener("DOMContentLoaded", () => {
+        setup_taglist();
+        setup_display();
+      });
 
+      // File Watcher Simulation
       setInterval(function () {
-        fetch(document.getElementById("svgname").value + "?R=" + Math.random())
+        const svgUrl = document.getElementById("svgname").value;
+        fetch(svgUrl + "?R=" + Math.random())
           .then(function (response) {
             if (response.ok)
               response.blob().then(function (myBlob) {
                 if (!myBlob.text) {
                   if (svgstring != myBlob.toString()) {
                     svgstring = myBlob.toString();
-                    document.getElementById("svgerr").textContent =
-                      "File contents changed!";
+                    document.getElementById("svgerr").textContent = "Update detected - reloading...";
                     setup_display();
                   } else document.getElementById("svgerr").textContent = "";
                 } else
                   myBlob.text().then(function (text) {
                     if (text != svgstring) {
                       svgstring = text;
-                      document.getElementById("svgerr").textContent =
-                        "File contents changed!";
+                      document.getElementById("svgerr").textContent = "Update detected - reloading...";
                       setup_display();
                     } else document.getElementById("svgerr").textContent = "";
                   });
               });
             else
-              document.getElementById("svgerr").textContent =
-                "Error loading file!";
+              document.getElementById("svgerr").textContent = "SVG Error: " + response.status;
           })
           .catch(function (error) {
-            document.getElementById("svgerr").textContent =
-              "Error loading file!";
+            document.getElementById("svgerr").textContent = "Fetch Error";
           });
-      }, 2000);
+      }, 3000);
     </script>
   </body>
 </html>

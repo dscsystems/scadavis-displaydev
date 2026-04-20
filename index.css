@@ -1,0 +1,311 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* ── Design Tokens ────────────────────────────────── */
+:root {
+  --primary:        #6366f1;
+  --primary-hover:  #4f46e5;
+  --primary-dim:    rgba(99,102,241,.15);
+  --bg-main:        #0d1117;
+  --bg-sidebar:     #161b22;
+  --bg-section:     #1c2333;
+  --bg-input:       #0d1117;
+  --bg-table-head:  #21262d;
+  --text-main:      #e6edf3;
+  --text-muted:     #8b949e;
+  --border:         #30363d;
+  --border-focus:   #6366f1;
+  --accent-green:   #3fb950;
+  --accent-red:     #f85149;
+  --radius-sm:      6px;
+  --radius-md:      10px;
+}
+
+/* ── Reset ────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── Base ─────────────────────────────────────────── */
+html, body {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 13px;
+  color: var(--text-main);
+  background: var(--bg-main);
+}
+
+/* ── Header ───────────────────────────────────────── */
+.app-header {
+  height: 52px;
+  padding: 0 20px;
+  background: var(--bg-sidebar);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  z-index: 20;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand svg { flex-shrink: 0; }
+
+.brand h1 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -.03em;
+  background: linear-gradient(135deg, #a5b4fc 0%, #818cf8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.version-badge {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  background: var(--primary-dim);
+  border: 1px solid rgba(99,102,241,.35);
+  border-radius: 99px;
+  color: #a5b4fc;
+  letter-spacing: .04em;
+}
+
+/* ── App Shell ────────────────────────────────────── */
+.app-container {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── Sidebar ──────────────────────────────────────── */
+.sidebar {
+  width: 260px;
+  min-width: 260px;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;               /* children manage their own scroll */
+}
+
+/* Controls pane — scrollable, shrinks when data panel needs space */
+.sidebar-controls {
+  flex-shrink: 0;
+  overflow-y: auto;
+  padding: 18px 16px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Data panel — fixed-height lower section */
+.data-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--border);
+  min-height: 0;                  /* allow flex child to shrink */
+}
+
+.data-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--bg-section);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.data-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--text-muted);
+}
+
+.btn-add-point {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-dim);
+  border: 1px solid rgba(99,102,241,.4);
+  border-radius: var(--radius-sm);
+  color: #a5b4fc;
+  cursor: pointer;
+  transition: background .15s, transform .1s;
+}
+
+.btn-add-point:hover {
+  background: rgba(99,102,241,.3);
+  transform: scale(1.08);
+}
+
+/* Spreadsheet wrapper — fills remaining space, scrolls vertically only */
+.spreadsheet-wrapper {
+  flex: 1;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: #fff;
+}
+
+/* Force the JExcel container and table to never exceed wrapper width */
+.spreadsheet-wrapper > div,
+.spreadsheet-wrapper .jexcel_content {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.spreadsheet-wrapper table.jexcel {
+  width: 100% !important;
+  table-layout: fixed !important;
+}
+
+/* Let columns share available space evenly when table-layout is fixed */
+.spreadsheet-wrapper .jexcel col:nth-child(2) { width: 50% !important; }
+.spreadsheet-wrapper .jexcel col:nth-child(3) { width: 50% !important; }
+
+/* Thinner, tighter cells for the narrow sidebar */
+.spreadsheet-wrapper .jexcel > tbody > tr > td,
+.spreadsheet-wrapper .jexcel > thead > tr > td {
+  padding: 5px 8px !important;
+  font-size: 12px !important;
+  color: #111827 !important;          /* solid dark text */
+  opacity: 1 !important;
+}
+
+/* Row-number column */
+.spreadsheet-wrapper .jexcel > tbody > tr > td:first-child {
+  background: #f3f4f6 !important;
+  color: #6b7280 !important;
+  font-weight: 600 !important;
+  text-align: center !important;
+}
+
+.spreadsheet-wrapper .jexcel > thead > tr > td {
+  background: #e5e7eb !important;
+  color: #111827 !important;
+  font-weight: 700 !important;
+  border-bottom: 2px solid #9ca3af !important;
+}
+
+/* Status bar */
+.status-info {
+  padding: 8px 14px;
+  border-top: 1px solid var(--border);
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* ── Main Content ─────────────────────────────────── */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #000;
+  overflow: hidden;
+  position: relative;
+}
+
+#divdisplay {
+  flex: 1;
+  width: 100% !important;
+  height: 100% !important;
+  border: none !important;
+}
+
+/* ── Sections ─────────────────────────────────────── */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.section-title {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--text-muted);
+}
+
+/* ── Inputs ───────────────────────────────────────── */
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.input-group label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-main);
+}
+
+.input-control {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 7px 10px;
+  color: var(--text-main);
+  font-size: 0.82rem;
+  font-family: inherit;
+  transition: border-color .15s, box-shadow .15s;
+}
+
+.input-control:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(99,102,241,.18);
+}
+
+/* ── Buttons ──────────────────────────────────────── */
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 8px 14px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background .15s, transform .1s, box-shadow .15s;
+}
+
+.btn:hover {
+  background: var(--primary-hover);
+  box-shadow: 0 4px 12px rgba(99,102,241,.35);
+  transform: translateY(-1px);
+}
+
+.btn:active { transform: translateY(0); }
+
+/* ── Status / Error Text ──────────────────────────── */
+#svgerr {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--accent-red);
+  min-height: 0;
+  word-break: break-all;
+}
+
+#svgerr:empty { display: none; }
