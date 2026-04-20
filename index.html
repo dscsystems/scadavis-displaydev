@@ -1,0 +1,221 @@
+<!doctype html>
+<html>
+  <head>
+    <link rel="stylesheet" href="jexcel.css" type="text/css" />
+    <link rel="stylesheet" href="jsuites.css" type="text/css" />
+    <script src="jexcel.js"></script>
+    <script src="jsuites.js"></script>
+    <script src="jszip.js"></script>
+    <script src="xlsx.js"></script>
+  </head>
+
+  <body style="font-family: calibri, arial, sans-serif">
+    <div id="divdisplayleft" style="float: left">
+      <div
+        id="divdisplay"
+        style="
+          width: 500px;
+          height: 500px;
+          border: 1px solid black;
+          margin-right: 20px;
+        "
+      ></div>
+      <div style="clear: both; padding-top: 20px">
+        Tags File:
+        <input
+          type="text"
+          id="sheetname"
+          name="sheetname"
+          value="taglist.csv"
+        />
+        <button value="" onClick="setup_taglist();">Reload Taglist</button>
+        <br />
+        <br />
+        SVG File:
+        <input type="text" id="svgname" name="svgname" value="training1.svg" />
+        <button value="" onClick="setup_display();">Reload Display</button>
+        <span id="svgerr"></span>
+        <br />
+        Width:
+        <input
+          type="number"
+          id="svgwidth"
+          name="svgwidth"
+          size="6"
+          min="100"
+          max="10000"
+          value="500"
+        />
+        <br />
+        Height:
+        <input
+          type="number"
+          id="svgheight"
+          name="svgheight"
+          size="6"
+          min="100"
+          max="10000"
+          value="500"
+        />
+        <br />
+        Zoom Level:
+        <input
+          type="number"
+          id="svgzoom"
+          name="svgzoom"
+          size="6"
+          min="0"
+          max="1"
+          value="0.5"
+        />
+        <pre>
+            ===================================================
+            SCADAvis.io Display Development Helper V3.0
+            Copyright 2020-present - DSC Systems
+            ===================================================
+            </pre
+        >
+      </div>
+    </div>
+    <div style="float: left">
+      <div id="spreadsheet"></div>
+      <br />
+      <button value="" onClick="sheet.insertRow();">Insert Row</button>
+    </div>
+
+    <script type="module">
+      import { scadavisInit } from "./synoptic3/scada-vis.js";
+
+      let sheet;
+      let svgstring;
+      let svInstance;
+
+      // Expose sheet to window so HTML can access it
+      window.sheet = sheet;
+
+      let changed = function (instance, cell, x, y, value) {
+        if (sheet == undefined || sheet == null || svInstance == undefined)
+          return;
+
+        let dt = sheet.getData();
+
+        for (let i = 0; i < dt.length; i++) {
+          if (!isNaN(parseFloat(dt[i][1])))
+            svInstance.storeValue(dt[i][0], parseFloat(dt[i][1]), false, false);
+          else if (dt[i][1].toLowerCase() === "false")
+            svInstance.storeValue(dt[i][0], false, false, false);
+          else if (dt[i][1].toLowerCase() === "true")
+            svInstance.storeValue(dt[i][0], true, false, false);
+          else svInstance.storeValue(dt[i][0], dt[i][1], false, false);
+        }
+        svInstance.updateValues();
+      };
+
+      function setup_taglist() {
+        jexcel.destroy(document.getElementById("spreadsheet"));
+        sheet = null;
+
+        if (document.getElementById("sheetname").value.indexOf(".xlsx") != -1) {
+          jexcel.fromSpreadsheet(
+            document.getElementById("sheetname").value + "?R=" + Math.random(),
+            function (result) {
+              if (!result.length) {
+                console.error("JEXCEL: Something went wrong.");
+              } else {
+                result[0].onchange = changed;
+                result[0].columns = [{ title: "TAGs" }, { title: "Values" }];
+                sheet = jexcel(
+                  document.getElementById("spreadsheet"),
+                  result[0],
+                );
+                window.sheet = sheet; // Keep global reference updated
+                changed();
+              }
+            },
+          );
+        } else {
+          sheet = jexcel(document.getElementById("spreadsheet"), {
+            csv:
+              document.getElementById("sheetname").value +
+              "?R=" +
+              Math.random(),
+            csvHeaders: true,
+            columns: [
+              { type: "text", width: 200 },
+              { type: "text", width: 100 },
+            ],
+            onchange: changed,
+            onload: function (result) {
+              // changed();
+            },
+          });
+          window.sheet = sheet; // Keep global reference updated
+        }
+      }
+
+      function setup_display() {
+        document.getElementById("divdisplay").style.width =
+          document.getElementById("svgwidth").value + "px";
+        document.getElementById("divdisplay").style.height =
+          document.getElementById("svgheight").value + "px";
+        document.getElementById("divdisplay").innerHTML = "";
+        scadavisInit({
+          container: "divdisplay",
+          iframeparams:
+            'height="' +
+            document.getElementById("svgheight").value +
+            '" width="' +
+            document.getElementById("svgwidth").value +
+            'px"',
+          svgurl:
+            document.getElementById("svgname").value + "?R=" + Math.random(),
+        }).then(function (sv) {
+          svInstance = sv;
+          svInstance.zoomTo(document.getElementById("svgzoom").value);
+          svInstance.enableTools(false, true);
+          svInstance.hideWatermark();
+          changed();
+        });
+      }
+
+      // Expose functions to global scope
+      window.setup_taglist = setup_taglist;
+      window.setup_display = setup_display;
+      window.changed = changed;
+
+      setup_taglist();
+
+      setInterval(function () {
+        fetch(document.getElementById("svgname").value + "?R=" + Math.random())
+          .then(function (response) {
+            if (response.ok)
+              response.blob().then(function (myBlob) {
+                if (!myBlob.text) {
+                  if (svgstring != myBlob.toString()) {
+                    svgstring = myBlob.toString();
+                    document.getElementById("svgerr").textContent =
+                      "File contents changed!";
+                    setup_display();
+                  } else document.getElementById("svgerr").textContent = "";
+                } else
+                  myBlob.text().then(function (text) {
+                    if (text != svgstring) {
+                      svgstring = text;
+                      document.getElementById("svgerr").textContent =
+                        "File contents changed!";
+                      setup_display();
+                    } else document.getElementById("svgerr").textContent = "";
+                  });
+              });
+            else
+              document.getElementById("svgerr").textContent =
+                "Error loading file!";
+          })
+          .catch(function (error) {
+            document.getElementById("svgerr").textContent =
+              "Error loading file!";
+          });
+      }, 2000);
+    </script>
+  </body>
+</html>
