@@ -5,7 +5,12 @@ Copyright 2020-present - DSC Systems
 
 This tools is intended to help development of SCADAvis.io SVG display files.
 
-Unzip the contents of the zip file to some local folder.
+Use it directly online here: https://dscsystems.github.io/scadavis-displaydev/
+
+Or clone the repository to some local folder.
+
+    git clone https://github.com/dscsystems/scadavis-displaydev.git
+
 Put the SVG file to be edited in this same folder.
 New files can be derived from helloworld.svg.
 
