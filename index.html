@@ -155,29 +155,114 @@
         }
       }
 
-      function setup_display() {
+      // Cache for Blob URLs to avoid memory leaks
+      let activeBlobUrl = null;
+
+      async function getFetchUrl(url) {
+        if (!url) return null;
+
+        // 1. URL Normalization
+        let targetUrl = url.split('#')[0].trim(); 
+        if (targetUrl.includes("github.com") && targetUrl.includes("/raw/")) {
+            targetUrl = targetUrl.replace("github.com", "raw.githubusercontent.com").replace("/raw/", "/");
+        }
+        
+        // Helpful tip for Wikimedia users
+        if (targetUrl.includes("wikimedia.org/wiki/")) {
+            document.getElementById("svgerr").textContent = "Tip: Use 'Original File' link from Wikimedia";
+        }
+
+        const cacheBust = (targetUrl.includes('?') ? '&' : '?') + "R=" + Math.random();
+        const fullUrl = targetUrl + cacheBust;
+        
+        try {
+            const urlObj = new URL(targetUrl, window.location.href);
+            if (urlObj.origin === window.location.origin) return fullUrl;
+
+            // 2. Try DIRECT fetch first (best for CORS-enabled sites)
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 1500);
+            try {
+                const check = await fetch(fullUrl, { method: 'HEAD', signal: controller.signal });
+                clearTimeout(timeoutId);
+                if (check.ok) return fullUrl;
+            } catch (e) {
+                clearTimeout(timeoutId);
+            }
+        } catch (e) {
+            return fullUrl;
+        }
+
+        // 3. Proxy Failover Chain
+        const proxyStrategies = [
+            (u) => "https://api.allorigins.win/get?url=" + encodeURIComponent(u),
+            (u) => "https://corsproxy.io/?" + encodeURIComponent(u)
+        ];
+
+        for (let getProxy of proxyStrategies) {
+            try {
+                const proxyUrl = getProxy(fullUrl);
+                const response = await fetch(proxyUrl);
+                if (!response.ok) continue;
+
+                let contents = "";
+                if (proxyUrl.includes("allorigins")) {
+                    const data = await response.json();
+                    contents = data.contents;
+                } else {
+                    contents = await response.text();
+                }
+
+                if (contents && contents.length > 50) {
+                    if (activeBlobUrl) URL.revokeObjectURL(activeBlobUrl);
+                    const blob = new Blob([contents], { type: 'image/svg+xml' });
+                    activeBlobUrl = URL.createObjectURL(blob);
+                    return activeBlobUrl;
+                }
+            } catch (e) {
+                console.warn("Proxy attempt failed, trying fallback...");
+            }
+        }
+        
+        return fullUrl; // Final fallback to direct (likely to fail but last resort)
+      }
+
+      async function setup_display() {
         const width = document.getElementById("svgwidth").value;
         const height = document.getElementById("svgheight").value;
         const svgUrl = document.getElementById("svgname").value;
         const zoom = document.getElementById("svgzoom").value;
 
         const displayContainer = document.getElementById("divdisplay");
-        displayContainer.innerHTML = "";
+        if (!displayContainer) return;
         
+        displayContainer.innerHTML = "";
+        const status = document.getElementById("svgerr");
+        status.textContent = "Resolving URL...";
+        
+        const fetchUrl = await getFetchUrl(svgUrl);
+        if (!fetchUrl) return;
+        
+        status.textContent = "Loading SVG...";
         scadavisInit({
           container: "divdisplay",
           iframeparams: `height="${height}" width="${width}"`,
-          svgurl: svgUrl + "?R=" + Math.random(),
+          svgurl: fetchUrl,
         }).then(function (sv) {
+          if (!sv) throw new Error("Empty instance");
           svInstance = sv;
           svInstance.zoomTo(zoom);
           svInstance.enableTools(false, true);
           svInstance.hideWatermark();
+          status.textContent = "";
           changed();
+        }).catch(e => {
+            console.error("Init Error:", e);
+            status.textContent = "Error: Check URL or CORS settings";
         });
       }
 
-      // Expose functions to global scope for HTML event handlers
+      // Expose functions to global scope
       window.setup_taglist = setup_taglist;
       window.setup_display = setup_display;
       window.changed = changed;
@@ -189,34 +274,23 @@
       });
 
       // File Watcher Simulation
-      setInterval(function () {
-        const svgUrl = document.getElementById("svgname").value;
-        fetch(svgUrl + "?R=" + Math.random())
-          .then(function (response) {
-            if (response.ok)
-              response.blob().then(function (myBlob) {
-                if (!myBlob.text) {
-                  if (svgstring != myBlob.toString()) {
-                    svgstring = myBlob.toString();
-                    document.getElementById("svgerr").textContent = "Update detected - reloading...";
-                    setup_display();
-                  } else document.getElementById("svgerr").textContent = "";
-                } else
-                  myBlob.text().then(function (text) {
-                    if (text != svgstring) {
-                      svgstring = text;
-                      document.getElementById("svgerr").textContent = "Update detected - reloading...";
-                      setup_display();
-                    } else document.getElementById("svgerr").textContent = "";
-                  });
-              });
-            else
-              document.getElementById("svgerr").textContent = "SVG Error: " + response.status;
-          })
-          .catch(function (error) {
-            document.getElementById("svgerr").textContent = "Fetch Error";
-          });
-      }, 3000);
+      setInterval(async function () {
+        const inputUrl = document.getElementById("svgname").value;
+        if (!inputUrl) return;
+
+        try {
+            const fetchUrl = await getFetchUrl(inputUrl);
+            const r = await fetch(fetchUrl);
+            const text = await r.text();
+            if (text && text.length > 50 && text != svgstring) {
+                svgstring = text;
+                document.getElementById("svgerr").textContent = "Updating...";
+                setup_display();
+            }
+        } catch (e) {
+            // Silently wait
+        }
+      }, 5000);
     </script>
   </body>
 </html>
