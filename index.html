@@ -116,45 +116,6 @@
         svInstance.updateValues();
       };
 
-      function setup_taglist() {
-        if (window.sheet) {
-          jexcel.destroy(document.getElementById("spreadsheet"));
-        }
-        window.sheet = null;
-
-        const sheetUrl = document.getElementById("sheetname").value;
-        const isXlsx = sheetUrl.toLowerCase().endsWith(".xlsx");
-
-        if (isXlsx) {
-          jexcel.fromSpreadsheet(
-            sheetUrl + "?R=" + Math.random(),
-            function (result) {
-              if (!result.length) {
-                console.error("JEXCEL: Something went wrong.");
-              } else {
-                result[0].onchange = changed;
-                result[0].columns = [{ title: "TAG", width: 120 }, { title: "Value", width: 90 }];
-                window.sheet = jexcel(document.getElementById("spreadsheet"), result[0]);
-                changed();
-              }
-            },
-          );
-        } else {
-          window.sheet = jexcel(document.getElementById("spreadsheet"), {
-            csv: sheetUrl + "?R=" + Math.random(),
-            csvHeaders: true,
-            columns: [
-              { type: "text", title: "TAG",   width: 120 },
-              { type: "text", title: "Value", width: 90  },
-            ],
-            onchange: changed,
-            onload: function () {
-              changed();
-            },
-          });
-        }
-      }
-
       // Cache for Blob URLs to avoid memory leaks
       let activeBlobUrl = null;
 
@@ -213,9 +174,16 @@
                     contents = await response.text();
                 }
 
-                if (contents && contents.length > 50) {
+                if (contents && contents.length > 5) {
                     if (activeBlobUrl) URL.revokeObjectURL(activeBlobUrl);
-                    const blob = new Blob([contents], { type: 'image/svg+xml' });
+                    
+                    // Determine MIME type
+                    let mimeType = 'text/plain';
+                    if (targetUrl.toLowerCase().endsWith(".svg")) mimeType = 'image/svg+xml';
+                    else if (targetUrl.toLowerCase().endsWith(".xlsx")) mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+                    else if (targetUrl.toLowerCase().endsWith(".csv")) mimeType = 'text/csv';
+
+                    const blob = new Blob([contents], { type: mimeType });
                     activeBlobUrl = URL.createObjectURL(blob);
                     return activeBlobUrl;
                 }
@@ -225,6 +193,46 @@
         }
         
         return fullUrl; // Final fallback to direct (likely to fail but last resort)
+      }
+
+      async function setup_taglist() {
+        if (window.sheet) {
+          jexcel.destroy(document.getElementById("spreadsheet"));
+        }
+        window.sheet = null;
+
+        const sheetUrl = document.getElementById("sheetname").value;
+        const fetchUrl = await getFetchUrl(sheetUrl);
+        const isXlsx = sheetUrl.toLowerCase().endsWith(".xlsx");
+
+        if (isXlsx) {
+          jexcel.fromSpreadsheet(
+            fetchUrl,
+            function (result) {
+              if (!result.length) {
+                console.error("JEXCEL: Something went wrong.");
+              } else {
+                result[0].onchange = changed;
+                result[0].columns = [{ title: "TAG", width: 120 }, { title: "Value", width: 90 }];
+                window.sheet = jexcel(document.getElementById("spreadsheet"), result[0]);
+                changed();
+              }
+            },
+          );
+        } else {
+          window.sheet = jexcel(document.getElementById("spreadsheet"), {
+            csv: fetchUrl,
+            csvHeaders: true,
+            columns: [
+              { type: "text", title: "TAG",   width: 120 },
+              { type: "text", title: "Value", width: 90  },
+            ],
+            onchange: changed,
+            onload: function () {
+              changed();
+            },
+          });
+        }
       }
 
       async function setup_display() {
@@ -268,9 +276,9 @@
       window.changed = changed;
 
       // Initial Load
-      document.addEventListener("DOMContentLoaded", () => {
-        setup_taglist();
-        setup_display();
+      document.addEventListener("DOMContentLoaded", async () => {
+        await setup_taglist();
+        await setup_display();
       });
 
       // File Watcher Simulation
